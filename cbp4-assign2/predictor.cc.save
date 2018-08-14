@@ -1,0 +1,149 @@
+#include "predictor.h"
+
+/////////////////////////////////////////////////////////////
+// 2bitsat
+/////////////////////////////////////////////////////////////
+//static int predictor_2bit;//2bit saturating counter predictor
+static int prediction_buffer[4096];
+void InitPredictor_2bitsat() {
+
+//predictor_2bit=1;
+	for (int i=0; i<4096; i++)
+		prediction_buffer[i]=1;
+}
+
+bool GetPrediction_2bitsat(UINT32 PC) {
+	unsigned int index= PC%4096;
+	if(prediction_buffer[index]>1)
+		return TAKEN;
+	else if(prediction_buffer[index]<2)
+		return NOT_TAKEN;
+}
+
+void UpdatePredictor_2bitsat(UINT32 PC, bool resolveDir, bool predDir, UINT32 branchTarget) {
+	unsigned int index= PC%4096;
+	if(resolveDir)
+		{
+			if(prediction_buffer[index]==3)
+				return;
+			else prediction_buffer[index]++;
+		}
+	else 
+		{
+			if(prediction_buffer[index]==0)
+				return;
+			else
+				prediction_buffer[index]--;
+		}
+}
+
+/////////////////////////////////////////////////////////////
+// 2level
+/////////////////////////////////////////////////////////////
+
+static u_int8_t BHT[512];
+static int * PHT[8];
+static int PHT1[64];
+static int PHT2[64];
+static int PHT3[64];
+static int PHT4[64];
+static int PHT5[64];
+static int PHT6[64];
+static int PHT7[64];
+static int PHT8[64];
+
+void InitPredictor_2level() {
+	//int index1=PC%4096;
+	//int index_BHT=index1/8;
+	//int index_PHT=index1%8;
+	for (int i=0;i<64;i++)
+	{
+		PHT1[i]=1;
+		PHT2[i]=1;
+		PHT3[i]=1;
+		PHT4[i]=1;
+		PHT5[i]=1;
+		PHT6[i]=1;
+		PHT7[i]=1;
+		PHT8[i]=1;		
+	}
+	PHT[0]=PHT1;
+	PHT[1]=PHT2;
+	PHT[2]=PHT3;
+	PHT[3]=PHT4;
+	PHT[4]=PHT5;
+	PHT[5]=PHT6;
+	PHT[6]=PHT7;
+	PHT[7]=PHT8;
+
+}
+
+bool GetPrediction_2level(UINT32 PC) {
+	unsigned int index1=PC%4096;
+	unsigned int index_BHT=index1/8;
+	unsigned int index_PHT1=index1%8;
+	unsigned int index_PHT2=BHT[index_BHT]%64;
+	unsigned int prediction=PHT[index_PHT1][index_PHT2];
+	if(prediction>1)
+		return TAKEN;
+	else if(prediction<2)
+		return NOT_TAKEN;
+
+}
+
+void UpdatePredictor_2level(UINT32 PC, bool resolveDir, bool predDir, UINT32 branchTarget) {
+	int index1=PC%4096;
+	int index_BHT=index1/8;
+	int index_PHT1=index1%8;
+	int index_PHT2=BHT[index_BHT]%64;
+	//int prediction=PHT[index_PHT1][index_PHT2];
+	BHT[index_BHT]=BHT[index_BHT]<<1;
+	if(resolveDir)
+	{
+		BHT[index_BHT]+=0x1;		
+		//PHT[index_PHT1][index_PHT2];
+		if(PHT[index_PHT1][index_PHT2]==3)
+				return;
+		else PHT[index_PHT1][index_PHT2]++;
+	}
+	else 
+		{
+			if(PHT[index_PHT1][index_PHT2]==0)
+				return;
+			else
+				PHT[index_PHT1][index_PHT2]--;
+		}
+
+}
+
+/////////////////////////////////////////////////////////////
+// openend
+/////////////////////////////////////////////////////////////
+int base_predictor[4096];
+int T1_tag[2048];
+int T1_predict[2048];
+int T1_u[2048];
+
+
+void InitPredictor_openend() {
+for (int i=0; i<4096;i++)
+{
+	base_predictor[i]=1;
+
+}
+for (int i=0;i<2048;i++)
+{
+	T1_predict[i]=1;
+}
+
+}
+
+bool GetPrediction_openend(UINT32 PC) {
+
+  return TAKEN;
+}
+
+void UpdatePredictor_openend(UINT32 PC, bool resolveDir, bool predDir, UINT32 branchTarget) {
+
+}
+

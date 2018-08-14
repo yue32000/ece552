@@ -1,0 +1,8 @@
+#!/bin/bash
+
+PINDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+$PINDIR/pin -t $PINDIR/source/tools/BranchTrace/obj-intel64/branchtrace.so -o branchtrace -- $@
+
+gzip branchtrace
+
